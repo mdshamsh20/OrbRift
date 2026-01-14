@@ -3,8 +3,8 @@ export const INITIAL_MASS = 20;
 export const MAX_MASS = 1000;
 export const GROWTH_FACTOR = 0.5;
 
-export const VELOCITY_BASE = 5;
-export const VELOCITY_MIN = 2;
+export const VELOCITY_BASE = 3.5;
+export const VELOCITY_MIN = 1.5;
 
 export const FOOD_COUNT = 250;
 export const BOT_COUNT = 15;

@@ -368,9 +368,16 @@ export class Engine {
         // Draw Particles
         this.particles.forEach(p => p.draw(this.ctx, this.camera));
 
-        // Draw Orbs
+        // Draw Orbs (with Culling)
         this.orbs.forEach(orb => {
-            orb.draw(this.ctx, this.camera);
+            const screenX = orb.x - this.camera.x;
+            const screenY = orb.y - this.camera.y;
+            const padding = orb.radius + 100;
+
+            if (screenX > -padding && screenX < this.width + padding &&
+                screenY > -padding && screenY < this.height + padding) {
+                orb.draw(this.ctx, this.camera);
+            }
         });
     }
 
