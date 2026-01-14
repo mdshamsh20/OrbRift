@@ -14,15 +14,8 @@ export class Orb {
 
         this.targetX = x;
         this.targetY = y;
-
-        this.velocity = VELOCITY_BASE;
-        this.nodes = [];
-        this.numNodes = 12;
-        this.initNodes();
-
         this.isDashing = false;
         this.dashTimer = 0;
-
         this.shieldActive = false;
         this.shieldTimer = 0;
 
@@ -31,20 +24,11 @@ export class Orb {
         this.alive = true;
         this.level = 1;
         this.evolutionTier = 0;
+
+        this.trail = [];
+        this.maxTrailLength = 20;
     }
 
-    initNodes() {
-        for (let i = 0; i < this.numNodes; i++) {
-            const angle = (i / this.numNodes) * Math.PI * 2;
-            this.nodes.push({
-                angle: angle,
-                distance: this.radius * 0.8,
-                x: this.x,
-                y: this.y,
-                phase: Math.random() * Math.PI * 2
-            });
-        }
-    }
 
     update(dt, mouseX, mouseY, camera) {
         if (!this.alive) return;
@@ -66,9 +50,18 @@ export class Orb {
             if (this.dashTimer <= 0) this.isDashing = false;
         }
 
+        // Fix Jitter: Use a larger dead zone and smooth interpolation
         if (dist > 5) {
             const angle = Math.atan2(this.targetY - this.y, this.targetX - this.x);
-            const moveDist = currentVelocity * (dt / 16.67); // Normalized to 60fps
+            let moveDist = currentVelocity * (dt / 16.67);
+
+            // Smooth arrival if close to target
+            if (dist < 100) {
+                moveDist *= (dist / 100);
+            }
+
+            // Prevent overshooting
+            if (moveDist > dist) moveDist = dist;
 
             this.x += Math.cos(angle) * moveDist;
             this.y += Math.sin(angle) * moveDist;
@@ -81,18 +74,12 @@ export class Orb {
         // Update radius based on mass
         this.radius = massToRadius(this.mass);
 
-        // Update nodes for cosmic effect
-        const time = Date.now() / 1000;
-        this.nodes.forEach((node, i) => {
-            node.angle += 0.02;
-            node.distance = lerp(node.distance, this.radius * (0.9 + Math.sin(time * 2 + i) * 0.1), 0.1);
-
-            const targetX = this.x + Math.cos(node.angle) * node.distance;
-            const targetY = this.y + Math.sin(node.angle) * node.distance;
-
-            node.x = lerp(node.x, targetX, 0.2);
-            node.y = lerp(node.y, targetY, 0.2);
-        });
+        // Update trail for comet effect
+        this.maxTrailLength = Math.floor(10 + Math.sqrt(this.mass) * 2);
+        this.trail.unshift({ x: this.x, y: this.y, r: this.radius });
+        if (this.trail.length > this.maxTrailLength) {
+            this.trail.pop();
+        }
 
         if (this.shieldActive) {
             this.shieldTimer -= dt;
@@ -113,21 +100,27 @@ export class Orb {
         const screenX = this.x - camera.x;
         const screenY = this.y - camera.y;
 
-        // Draw nodes/connections
-        ctx.beginPath();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = 0.5;
+        // Draw Comet Trail
+        if (this.trail.length > 1) {
+            ctx.beginPath();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
 
-        for (let i = 0; i < this.nodes.length; i++) {
-            const node = this.nodes[i];
-            const nextNode = this.nodes[(i + 1) % this.nodes.length];
+            for (let i = 0; i < this.trail.length - 1; i++) {
+                const point = this.trail[i];
+                const nextPoint = this.trail[i + 1];
+                const ratio = 1 - (i / this.trail.length);
 
-            if (i === 0) ctx.moveTo(node.x - camera.x, node.y - camera.y);
-            else ctx.lineTo(node.x - camera.x, node.y - camera.y);
+                ctx.globalAlpha = ratio * 0.5;
+                ctx.lineWidth = point.r * 1.8 * ratio;
+                ctx.strokeStyle = this.color;
+
+                ctx.beginPath();
+                ctx.moveTo(point.x - camera.x, point.y - camera.y);
+                ctx.lineTo(nextPoint.x - camera.x, nextPoint.y - camera.y);
+                ctx.stroke();
+            }
         }
-        ctx.closePath();
-        ctx.stroke();
 
         // Draw Shield
         if (this.shieldActive) {
@@ -152,22 +145,31 @@ export class Orb {
             ctx.fill();
         }
 
-        const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, this.radius);
-        gradient.addColorStop(0, '#fff');
-        gradient.addColorStop(0.3, this.color);
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        // Draw Core Nucleus
+        ctx.globalAlpha = 1.0;
+        const nucleusGrad = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, this.radius);
+        nucleusGrad.addColorStop(0, '#fff');
+        nucleusGrad.addColorStop(0.2, '#fff');
+        nucleusGrad.addColorStop(0.5, this.color);
+        nucleusGrad.addColorStop(1, 'rgba(0,0,0,0)');
 
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = nucleusGrad;
         ctx.beginPath();
         ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Inner glow
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, this.radius * 0.4, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff';
-        ctx.globalAlpha = 0.3;
-        ctx.fill();
+        // High-energy particles around head
+        if (this.isDashing) {
+            for (let i = 0; i < 3; i++) {
+                const offX = (Math.random() - 0.5) * this.radius * 2;
+                const offY = (Math.random() - 0.5) * this.radius * 2;
+                ctx.beginPath();
+                ctx.arc(screenX + offX, screenY + offY, this.radius * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.globalAlpha = 0.4;
+                ctx.fill();
+            }
+        }
 
         // Draw Name
         ctx.globalAlpha = 1.0;
