@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #03030b;
+  --color-bg-secondary: #0a0a1f;
+  --color-primary: #00f2ff;
+  --color-primary-glow: rgba(0, 242, 255, 0.5);
+  --color-secondary: #ff00ff;
+  --color-secondary-glow: rgba(255, 0, 255, 0.5);
+  --color-accent: #7000ff;
+  --color-energy: #f0ff00;
+  --color-danger: #ff3e3e;
+  --color-text: #ffffff;
+  --color-text-muted: #a0a0c0;
+  
+  --glass-bg: rgba(10, 10, 30, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  
+  --font-main: 'Inter', sans-serif;
+  --font-display: 'Orbitron', sans-serif;
+  
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  overflow: hidden; /* Prevent scrolling since it's a game */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  transition: var(--transition-normal);
+}
+
+canvas {
+  display: block;
+}
+
+/* Base Utility Classes */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 12px;
+}
+
+.text-glow {
+  text-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+.title-display {
+  font-family: var(--font-display);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.neon-border {
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 0 10px var(--color-primary-glow), inset 0 0 5px var(--color-primary-glow);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all var(--transition-normal);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px var(--color-primary-glow);
+  filter: brightness(1.2);
+}
+
+.btn-secondary {
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+
+.btn-secondary:hover {
+  background: var(--color-primary-glow);
+  color: #fff;
+}
